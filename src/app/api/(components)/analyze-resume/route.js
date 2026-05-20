@@ -94,10 +94,14 @@ Provide an improved version of their resume with your recommendations applied. M
 
 export async function POST(request) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         await connectDB();
 
         const { searchParams } = new URL(request.url);
-        const userEmail = searchParams.get('email');
         const fileType = searchParams.get('fileType'); // ✅ "pdf" ya "docx"
 
         let extractedText = "";
@@ -114,7 +118,7 @@ export async function POST(request) {
 
             await resumeModel.create({
                 resumeUrl: "pdf-upload",
-                userEmail
+                userEmail: session.user.email
             });
 
         } else {
@@ -128,7 +132,7 @@ export async function POST(request) {
 
             await resumeModel.create({
                 resumeUrl: uploadResult.secure_url,
-                userEmail
+                userEmail: session.user.email
             });
 
             const downloadedBuffer = await downloadFileAsBuffer(uploadResult.secure_url);
