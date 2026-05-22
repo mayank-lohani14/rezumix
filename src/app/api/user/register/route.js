@@ -49,7 +49,6 @@ export async function POST(req, res) {
         const user = await userModel.create({
             fullName: sanitizedName,
             email: sanitizedEmail,
-            password  // password is hashed by the pre-save hook, so no HTML sanitization needed
         })
 
         if (!user) {

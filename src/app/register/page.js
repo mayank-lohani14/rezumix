@@ -217,7 +217,7 @@ export default function Register() {
 
                 // Redirect to verify-otp with email query parameter after 2 seconds
                 setTimeout(() => {
-                    router.push(`/verify-otp?email=${encodeURIComponent(registeredEmail)}`);
+                router.push(`/verify-otp?email=${encodeURIComponent(registeredEmail)}`)
                 }, 2000);
             }
         } catch (err) {
