@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 import userModel from "@/models/userModel";
 import { connectDB } from "@/db/connectDB";
@@ -11,7 +12,7 @@ export async function POST(req) {
 
     const body = await req.json();
 
-    // 1. Safe body extraction
+    // Safe body extraction
     if (!body || !body.passwordChange) {
       return NextResponse.json(
         {
@@ -31,13 +32,15 @@ export async function POST(req) {
     const { currentPassword, newPassword, confirmPassword } =
       body.passwordChange;
 
-    // 2. Type checking & NoSQL injection prevention
-    const { searchParams } = new URL(req.url);
+    // Authenticate user from NextAuth session
+    const token = await getToken({
+      req,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
 
-    const userEmail = searchParams.get("email");
+    const userId = token?.id;
 
     if (
-      !isPlainString(userEmail) ||
       !isPlainString(currentPassword) ||
       !isPlainString(newPassword) ||
       !isPlainString(confirmPassword)
@@ -57,9 +60,23 @@ export async function POST(req) {
       );
     }
 
-    const sanitizedEmail = userEmail.trim().toLowerCase();
+    if (!userId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Unauthorized",
+          errors: [
+            {
+              field: "general",
+              messages: ["You must be logged in to change password"],
+            },
+          ],
+        },
+        { status: 401 }
+      );
+    }
 
-    // 3. Validate passwords match
+    // Validate passwords match
     if (newPassword !== confirmPassword) {
       return NextResponse.json(
         {
@@ -76,7 +93,7 @@ export async function POST(req) {
       );
     }
 
-    // 4. Validate password complexity
+    // Validate password strength
     const passwordValidation = validatePassword(newPassword);
 
     if (!passwordValidation.valid) {
@@ -95,10 +112,8 @@ export async function POST(req) {
       );
     }
 
-    // 5. Find user
-    const user = await userModel.findOne({
-      email: sanitizedEmail,
-    });
+    // Find logged-in user
+    const user = await userModel.findById(userId);
 
     if (!user) {
       return NextResponse.json(
@@ -116,7 +131,7 @@ export async function POST(req) {
       );
     }
 
-    // 6. Verify current password
+    // Verify current password
     const isCurrentPasswordCorrect = await bcrypt.compare(
       currentPassword,
       user.password
@@ -140,10 +155,9 @@ export async function POST(req) {
       );
     }
 
-    // 7. Update password
     // IMPORTANT:
-    // Do NOT hash manually here because
-    // the mongoose pre-save hook already hashes it.
+    // Do NOT hash manually here.
+    // Mongoose pre-save hook already hashes password.
 
     user.password = newPassword;
 

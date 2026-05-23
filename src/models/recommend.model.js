@@ -5,6 +5,11 @@ const recommendSchema = mongoose.Schema(
         recommendUserName: {
             type: String
         },
+        userEmail: {
+            type: String,
+            required: true,
+            index: true
+        },
         skills: {
             type: [String]
         },
@@ -18,6 +23,9 @@ const recommendSchema = mongoose.Schema(
             type: Number
         }
     },
+    {
+        timestamps: true
+    }
 )
 
 export default mongoose.models.Recommend || mongoose.model("Recommend", recommendSchema);

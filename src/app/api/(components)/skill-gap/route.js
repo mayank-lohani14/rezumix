@@ -7,6 +7,8 @@ import mammoth from "mammoth";
 import { extractResumeDetails } from "@/utils/extractResumeData";
 import skillGapModel from "@/models/skillGap.model";
 import OpenAI from "openai";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -43,6 +45,11 @@ const openai = new OpenAI({
 
 export async function POST(req) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         await connectDB();
 
         const { searchParams } = new URL(req.url);
@@ -51,7 +58,6 @@ export async function POST(req) {
         let resumeText = "";
         let jobRole = "";
         let jobSkill = "";
-        let userEmail = "";
 
         if (fileType === "pdf") {
             // ✅ PDF — frontend se text + job data JSON mein aayega
@@ -59,7 +65,6 @@ export async function POST(req) {
             resumeText = body.text;
             jobRole = body.jobRole;
             jobSkill = body.jobSkill;
-            userEmail = body.userEmail;
 
             if (!resumeText || resumeText.trim().length === 0) {
                 return NextResponse.json({ error: "Could not extract text from PDF." }, { status: 400 });
@@ -69,7 +74,7 @@ export async function POST(req) {
                 resumeUrl: "pdf-upload",
                 jobRole,
                 jobSkill,
-                userEmail
+                userEmail: session.user.email
             });
 
         } else {
@@ -78,7 +83,6 @@ export async function POST(req) {
             const file = formData.get("file");
             jobRole = formData.get("jobRole");
             jobSkill = formData.get("jobSkill");
-            userEmail = formData.get("userEmail");
 
             if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
@@ -93,7 +97,7 @@ export async function POST(req) {
                 resumeUrl: uploadResult.secure_url,
                 jobRole,
                 jobSkill,
-                userEmail
+                userEmail: session.user.email
             });
         }
 
@@ -168,9 +172,19 @@ export async function POST(req) {
 
 export async function GET() {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         await connectDB();
 
-        const skillGaps = await skillGapModel.find().lean();
+        let query = {};
+        if (session.user.role !== "admin") {
+            query = { userEmail: session.user.email };
+        }
+
+        const skillGaps = await skillGapModel.find(query).lean();
 
         if (!skillGaps) {
             return NextResponse.json({ error: "skill gap record not found" }, { status: 400 });
