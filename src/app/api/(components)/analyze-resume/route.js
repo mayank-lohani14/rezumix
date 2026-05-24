@@ -167,7 +167,7 @@ export async function POST(request) {
 
         // Start streaming Gemini call — unchanged from original
         const stream = await openai.chat.completions.create({
-            model: "gemini-2.0-flash",
+            model: "gemini-2.5-flash",
             messages: [
                 { role: "system", content: system_prompt },
                 { role: "user", content: extractedText },
@@ -178,7 +178,7 @@ export async function POST(request) {
         // Fire keyword analysis in background — does NOT block stream
         // Isolated catch so failure never affects the main analysis stream
         const keywordPromise = openai.chat.completions.create({
-            model: "gemini-2.0-flash",
+            model: "gemini-2.5-flash",
             messages: [
                 { role: "user", content: keyword_prompt(extractedText) }
             ],
