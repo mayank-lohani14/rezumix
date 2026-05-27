@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { marked } from "marked";
 import { Button } from "../ui/button";
+import { FetchErrorBanner } from "@/components/ui/fetch-error-banner";
 
 const questions = [
     { id: 1, text: "Do you prefer structured routines?" },
@@ -55,6 +56,7 @@ export default function PersonalityPrediction() {
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [submitted, setSubmitted] = useState(false);
     const [personalityResult, setPersonalityResult] = useState('');
+    const [fetchError, setFetchError] = useState("");
     const [name, setName] = useState("");
     const [quizStarted, setQuizStarted] = useState(false);
 
@@ -75,6 +77,8 @@ export default function PersonalityPrediction() {
                 body: JSON.stringify({ answers, name })
             });
 
+            if (!response.ok) throw new Error(`Request failed: ${response.statusText}`);
+
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
 
@@ -93,7 +97,7 @@ export default function PersonalityPrediction() {
             }
         } catch (error) {
             console.error("Error fetching AI analysis:", error);
-            setPersonalityResult("Failed to analyze personality.");
+            setFetchError(error.message || "Failed to analyze personality. Please try again.");
         }
     };
 
@@ -108,6 +112,7 @@ export default function PersonalityPrediction() {
         setCurrentQuestion(0);
         setAnswers({});
         setPersonalityResult('');
+        setFetchError("");
         setQuizStarted(false);
         setName("");
     };
@@ -238,7 +243,17 @@ export default function PersonalityPrediction() {
                                 </div>
                             </div>
 
-                            {personalityResult ? (
+                            {fetchError ? (
+                                <FetchErrorBanner
+                                    message={fetchError}
+                                    onRetry={() => {
+                                        setFetchError("");
+                                        setPersonalityResult("");
+                                        submitAnswers();
+                                    }}
+                                    className="my-8"
+                                />
+                            ) : personalityResult ? (
                                 <div 
                                     className="
                                         text-slate-300 leading-relaxed space-y-6
@@ -262,6 +277,7 @@ export default function PersonalityPrediction() {
                                     <p className="text-purple-300 text-lg animate-pulse">Analyzing your traits...</p>
                                 </div>
                             )}
+
 
                             {personalityResult && (
                                 <div className="mt-12 pt-8 border-t border-white/10">

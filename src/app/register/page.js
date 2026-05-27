@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import { EMAIL_REGEX, PASSWORD_RULES, getPasswordStrength } from "@/lib/validation";
-import { motion } from "framer-motion";
+import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
+import { toast } from "sonner";
 import {
     User,
     Mail,
@@ -157,6 +158,7 @@ export default function Register() {
             });
 
             if (response.status === 200) {
+                toast.success("Registration successful! Verify your email to continue...");
                 setSuccess("Registration successful! Redirecting...");
                 const registeredEmail = email.trim().toLowerCase();
                 
@@ -173,13 +175,23 @@ export default function Register() {
                 }, 2000);
             }
         } catch (err) {
+            let errorMsg = "An error occurred. Please try again.";
+            
             if (err?.response?.data?.errors && err.response.data.errors.length > 0) {
-                setError(err.response.data.errors[0].messages[0]);
+                errorMsg = err.response.data.errors[0].messages[0];
+                if (errorMsg.includes("email")) {
+                    toast.error("Email already exists. Please use a different email.");
+                } else {
+                    toast.error(errorMsg);
+                }
             } else if (err?.response?.data?.message) {
-                setError(err.response.data.message);
+                errorMsg = err.response.data.message;
+                toast.error(errorMsg);
             } else {
-                setError("An error occurred. Please try again.");
+                toast.error(errorMsg);
             }
+            
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }
