@@ -8,10 +8,17 @@ import {
     Target,
     Sparkles,
     User,
-    ArrowRight
+    ArrowRight,
+    ChevronRight
 } from "lucide-react";
 
 import { marked } from "marked";
+
+
+marked.setOptions({
+    breaks: true,
+    gfm: true,
+});
 
 const questions = [
     { id: 1, text: "Do you prefer structured routines?" },
@@ -64,7 +71,6 @@ export default function PersonalityPrediction() {
     const [loading, setLoading] = useState(false);
 
     const handleAnswer = (value) => {
-
         const updatedAnswers = {
             ...answers,
             [questions[currentQuestion].text]: value,
@@ -80,12 +86,10 @@ export default function PersonalityPrediction() {
     };
 
     const submitAnswers = async (finalAnswers) => {
-
         setSubmitted(true);
         setLoading(true);
 
         try {
-
             const response = await fetch("/api/personality-prediction", {
                 method: "POST",
                 headers: {
@@ -106,13 +110,8 @@ export default function PersonalityPrediction() {
             setPersonalityResult(data.result);
 
         } catch (error) {
-
             console.log(error);
-
-            setFetchError(
-                error.message || "Failed to analyze personality."
-            );
-
+            setFetchError(error.message || "Failed to analyze personality.");
         } finally {
             setLoading(false);
         }
@@ -138,15 +137,7 @@ export default function PersonalityPrediction() {
     };
 
     const renderMarkdown = (markdown) => {
-
-        if (!markdown) {
-            return { __html: "" };
-        }
-
-        marked.setOptions({
-            breaks: true,
-            gfm: true,
-        });
+        if (!markdown) return { __html: "" };
 
         return {
             __html: marked(markdown),
@@ -161,7 +152,6 @@ export default function PersonalityPrediction() {
             <div className="relative z-10 max-w-5xl mx-auto px-6 py-12">
 
                 {/* Header */}
-
                 <div className="text-center mb-12">
 
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-medium mb-6">
@@ -218,9 +208,7 @@ export default function PersonalityPrediction() {
                                             <input
                                                 type="text"
                                                 value={name}
-                                                onChange={(e) =>
-                                                    setName(e.target.value)
-                                                }
+                                                onChange={(e) => setName(e.target.value)}
                                                 placeholder="John Doe"
                                                 className="w-full bg-[#111] border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-purple-500/50"
                                             />
@@ -255,64 +243,39 @@ export default function PersonalityPrediction() {
                             className="bg-[#0A0A0A] border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl max-w-3xl mx-auto"
                         >
 
-                            {/* Progress */}
-
                             <div className="mb-8">
-
                                 <div className="flex justify-between text-xs text-slate-400 mb-2">
-
-                                    <span>
-                                        QUESTION {currentQuestion + 1} /{" "}
-                                        {questions.length}
-                                    </span>
-
-                                    <span>
-                                        {Math.round(progressPercentage)}%
-                                    </span>
-
+                                    <span>QUESTION {currentQuestion + 1} / {questions.length}</span>
+                                    <span>{Math.round(progressPercentage)}%</span>
                                 </div>
 
                                 <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-
                                     <motion.div
                                         className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
-                                        animate={{
-                                            width: `${progressPercentage}%`,
-                                        }}
+                                        animate={{ width: `${progressPercentage}%` }}
                                     />
-
                                 </div>
-
                             </div>
 
                             <h2 className="text-2xl md:text-3xl font-bold text-white mb-10 text-center">
-
                                 {questions[currentQuestion].text}
-
                             </h2>
 
                             <div className="space-y-3">
 
                                 {options.map((option, idx) => (
-
                                     <button
                                         key={idx}
                                         onClick={() => handleAnswer(option)}
                                         className="w-full p-4 text-left bg-white/5 hover:bg-white/10 border border-white/5 hover:border-purple-500/30 rounded-xl transition-all"
                                     >
-
                                         <div className="flex items-center justify-between">
-
                                             <span className="text-slate-300 font-medium">
                                                 {option}
                                             </span>
-
                                             <ChevronRight className="w-5 h-5 text-slate-500" />
-
                                         </div>
-
                                     </button>
-
                                 ))}
 
                             </div>
@@ -328,74 +291,35 @@ export default function PersonalityPrediction() {
                             className="bg-[#0A0A0A] border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl"
                         >
 
-                            <div className="flex items-center gap-4 mb-8 border-b border-white/5 pb-6">
-
-                                <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-
-                                    <Target className="w-6 h-6 text-purple-400" />
-
-                                </div>
-
-                                <div>
-
-                                    <h2 className="text-2xl font-bold text-white">
-                                        Personality Profile
-                                    </h2>
-
-                                    <p className="text-slate-400 text-sm">
-                                        Analysis for {name}
-                                    </p>
-
-                                </div>
-
-                            </div>
-
                             {loading ? (
 
                                 <div className="flex flex-col items-center justify-center py-20">
-
                                     <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-6"></div>
-
-                                    <p className="text-purple-300 text-lg">
-                                        Analyzing your traits...
-                                    </p>
-
+                                    <p className="text-purple-300 text-lg">Analyzing your traits...</p>
                                 </div>
 
                             ) : fetchError ? (
 
-                                <div className="text-red-400">
-                                    {fetchError}
-                                </div>
+                                <div className="text-red-400">{fetchError}</div>
 
                             ) : (
 
                                 <div
                                     className="prose prose-invert max-w-none"
-                                    dangerouslySetInnerHTML={renderMarkdown(
-                                        personalityResult
-                                    )}
+                                    dangerouslySetInnerHTML={renderMarkdown(personalityResult)}
                                 />
-
                             )}
 
                             {!loading && (
-
                                 <div className="mt-12 pt-8 border-t border-white/10">
-
                                     <button
                                         onClick={retakeQuiz}
                                         className="px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-medium transition-all flex items-center gap-2"
                                     >
-
                                         <ArrowLeft className="w-4 h-4" />
-
                                         Retake Assessment
-
                                     </button>
-
                                 </div>
-
                             )}
 
                         </motion.div>
@@ -405,7 +329,6 @@ export default function PersonalityPrediction() {
                 </AnimatePresence>
 
             </div>
-
         </div>
     );
 }
